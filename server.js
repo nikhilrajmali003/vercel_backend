@@ -10,8 +10,31 @@ dotenv.config();
 const app = express();
 
 // Middleware
+// Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.FRONTEND_URL?.replace(/^https?:\/\//, ''), // Allow domain without protocol if needed (though browser sends protocol)
+  'http://localhost:3000' // Local development
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // Only allow frontend domain
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Check if origin matches allowed ones or is a subdomain (simple check)
+    // For netlify, we want to be strict but allow the protocol difference
+    const isAllowed = allowedOrigins.some(allowed =>
+      origin === allowed || origin === `https://${allowed}` || origin === `http://${allowed}`
+    );
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`); // Log blocked origins for debugging
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
