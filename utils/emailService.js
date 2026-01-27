@@ -2,29 +2,27 @@ const nodemailer = require('nodemailer');
 
 // Create reusable transporter
 // Create reusable transporter
+// Create reusable transporter
 const createTransporter = () => {
-  // For production, consider using services like SendGrid, AWS SES, etc.
-  const port = process.env.SMTP_PORT || 587;
+  // Debug log to see what is actually being used (masking password)
+  console.log('📧 Email Config:', {
+    service: 'gmail',
+    user: process.env.SMTP_USER,
+    passLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0
+  });
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: port,
-    secure: port == 465, // true for 465, false for other ports
+    service: 'gmail', // Built-in shorthand for smtp.gmail.com:465 with secure:true
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
     },
-    // Add timeouts to fail faster and debug better
-    // Add timeouts to fail faster and debug better
+    // Add timeouts
     connectionTimeout: 30000,
     greetingTimeout: 30000,
     socketTimeout: 30000,
     logger: true,
-    debug: true,
-    // Force IPv4 to avoid IPv6 timeout issues on some cloud providers
-    dns: {
-      family: 4
-    }
+    debug: true
   });
 };
 
