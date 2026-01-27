@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 
 // Create reusable transporter
+// Create reusable transporter
 const createTransporter = () => {
   // For production, consider using services like SendGrid, AWS SES, etc.
   const port = process.env.SMTP_PORT || 587;
@@ -14,9 +15,16 @@ const createTransporter = () => {
       pass: process.env.SMTP_PASS
     },
     // Add timeouts to fail faster and debug better
-    connectionTimeout: 10000,
-    greetingTimeout: 5000,
-    socketTimeout: 10000
+    // Add timeouts to fail faster and debug better
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    logger: true,
+    debug: true,
+    // Force IPv4 to avoid IPv6 timeout issues on some cloud providers
+    dns: {
+      family: 4
+    }
   });
 };
 
