@@ -11,13 +11,13 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow all origins in development
+  origin: process.env.FRONTEND_URL, // Only allow frontend domain
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files
+// Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Request logging middleware (development only)
@@ -49,10 +49,9 @@ app.use((req, res) => {
 });
 
 // MongoDB connection
-const PORT = process.env.PORT || 5001; // Changed from 5000 to avoid macOS AirPlay conflict
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/figma-assignment';
+const PORT = process.env.PORT || 5000;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-// Connect to MongoDB
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('✅ MongoDB connected successfully');
@@ -62,14 +61,14 @@ mongoose.connect(MONGODB_URI)
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
+      console.log(`📡 API Base URL: ${process.env.FRONTEND_URL}/api`);
     });
 
-    // Handle server errors (e.g., port already in use)
+    // Handle server errors
     server.on('error', (error) => {
       if (error.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${PORT} is already in use. Please stop the other process or use a different port.`);
-        console.error(`💡 To find and kill the process: lsof -ti:${PORT} | xargs kill -9`);
+        console.error(`❌ Port ${PORT} is already in use.`);
+        console.error(`💡 To free it: lsof -ti:${PORT} | xargs kill -9`);
       } else {
         console.error('❌ Server error:', error.message);
       }
@@ -81,7 +80,7 @@ mongoose.connect(MONGODB_URI)
     process.exit(1);
   });
 
-// Handle MongoDB connection events
+// MongoDB connection events
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️  MongoDB disconnected');
 });
