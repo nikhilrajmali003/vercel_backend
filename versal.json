@@ -1,0 +1,8 @@
+{
+    "app": "MERN Assignment Project",
+    "version": "1.0.0",
+    "buildNumber": 1,
+    "commit": "main",
+    "releaseDate": "2026-01-27",
+    "environment": "production"
+}
