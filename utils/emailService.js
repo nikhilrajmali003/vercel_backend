@@ -4,44 +4,42 @@ const nodemailer = require('nodemailer');
 // Create reusable transporter
 // Create reusable transporter
 const createTransporter = () => {
-  // Debug log to see what is actually being used (masking password)
-  console.log('📧 Email Config:', {
-    host: process.env.SMTP_HOST || 'gmail (service)',
-    port: process.env.SMTP_PORT || 'default',
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '465');
+  const secure = port === 465;
+
+  console.log('📧 Email Config Initialization:', {
+    host,
+    port,
+    secure,
     user: process.env.SMTP_USER,
     passLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0
   });
 
   const config = {
+    host,
+    port,
+    secure,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
     },
-    // Add timeouts
-    connectionTimeout: 60000, // Increased to 60s
-    greetingTimeout: 60000,
-    socketTimeout: 60000,
-    // Force IPv4 to avoid IPv6 issues in some container environments
+    // Production-grade connection settings
+    connectionTimeout: 20000, // 20s is plenty for a healthy connection
+    greetingTimeout: 20000,
+    socketTimeout: 30000,
+    // Explicitly set TLS options to avoid old SSL versions like SSLv3
+    tls: {
+      // Do not fail on invalid certs in dev, but keep strict in prod if possible
+      // Often cloud providers intercept traffic, so sometimes this needs to be false
+      rejectUnauthorized: process.env.NODE_ENV === 'production',
+      minVersion: 'TLSv1.2'
+    },
+    // Force IPv4 to avoid common cloud IPv6 routing issues
     family: 4,
     logger: true,
     debug: true
   };
-
-  // Use explicit host/port if defined, otherwise fallback to 'service: gmail'
-  if (process.env.SMTP_HOST) {
-    config.host = process.env.SMTP_HOST;
-    config.port = parseInt(process.env.SMTP_PORT || '587');
-    config.secure = config.port === 465; // true for 465, false for other ports
-  } else {
-    // Default to Port 587 (STARTTLS) for better reliability on cloud hosting (Render, AWS, etc.)
-    // 'service: gmail' defaults to 465 (SSL) which often times out
-    config.port = 587;
-    config.secure = false; // true for 465, false for other ports
-  }
-
-  // Final config verification log
-  const debugConfig = { ...config, auth: { ...config.auth, pass: '*****' } };
-  console.log('👷 Final Nodemailer Config:', JSON.stringify(debugConfig, null, 2));
 
   return nodemailer.createTransport(config);
 };
