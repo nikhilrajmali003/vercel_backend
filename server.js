@@ -13,30 +13,36 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  process.env.FRONTEND_URL?.replace(/^https?:\/\//, ''), // Allow domain without protocol if needed (though browser sends protocol)
-  'http://localhost:3000', // Local development
-  'https://swipcard.netlify.app' // Explicitly allow deployed frontend
+  process.env.FRONTEND_URL?.replace(/^https?:\/\//, ''),
+  'http://localhost:3000',
+  'https://swipcard.netlify.app'
 ].filter(Boolean);
+
+// Handle preflight requests for all routes
+app.options('*', cors());
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    // Check if origin matches allowed ones or is a subdomain (simple check)
-    // For netlify, we want to be strict but allow the protocol difference
-    const isAllowed = allowedOrigins.some(allowed =>
-      origin === allowed || origin === `https://${allowed}` || origin === `http://${allowed}`
-    );
-
-    if (isAllowed) {
+    if (allowedOrigins.some(allowed =>
+      origin === allowed ||
+      origin === `https://${allowed}` ||
+      origin === `http://${allowed}` ||
+      origin.endsWith(allowed) // Allow subdomains if needed
+    )) {
       callback(null, true);
     } else {
-      console.warn(`Blocked by CORS: ${origin}`); // Log blocked origins for debugging
+      console.warn(`Blocked by CORS: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
