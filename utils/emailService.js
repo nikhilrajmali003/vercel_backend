@@ -6,13 +6,13 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
   // Debug log to see what is actually being used (masking password)
   console.log('📧 Email Config:', {
-    service: 'gmail',
+    host: process.env.SMTP_HOST || 'gmail (service)',
+    port: process.env.SMTP_PORT || 'default',
     user: process.env.SMTP_USER,
     passLength: process.env.SMTP_PASS ? process.env.SMTP_PASS.length : 0
   });
 
-  return nodemailer.createTransport({
-    service: 'gmail', // Built-in shorthand for smtp.gmail.com:465 with secure:true
+  const config = {
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS
@@ -23,7 +23,18 @@ const createTransporter = () => {
     socketTimeout: 30000,
     logger: true,
     debug: true
-  });
+  };
+
+  // Use explicit host/port if defined, otherwise fallback to 'service: gmail'
+  if (process.env.SMTP_HOST) {
+    config.host = process.env.SMTP_HOST;
+    config.port = parseInt(process.env.SMTP_PORT || '587');
+    config.secure = config.port === 465; // true for 465, false for other ports
+  } else {
+    config.service = 'gmail';
+  }
+
+  return nodemailer.createTransport(config);
 };
 
 // Generate OTP email HTML template
