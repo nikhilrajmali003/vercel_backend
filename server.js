@@ -60,6 +60,25 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
+// Email connection test endpoint (Temporary)
+app.get('/api/test-email-connection', async (req, res) => {
+  try {
+    const { verifyEmailConfig } = require('./utils/emailService');
+    const result = await verifyEmailConfig();
+    res.json({
+      ...result,
+      env: {
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
+        user: process.env.SMTP_USER ? 'Set' : 'Missing',
+        pass: process.env.SMTP_PASS ? 'Set' : 'Missing'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
+});
+
 // Error handling middleware (must be after routes)
 app.use(errorHandler);
 

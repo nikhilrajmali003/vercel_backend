@@ -33,10 +33,13 @@ const createTransporter = () => {
   } else {
     // Default to Port 587 (STARTTLS) for better reliability on cloud hosting (Render, AWS, etc.)
     // 'service: gmail' defaults to 465 (SSL) which often times out
-    config.host = 'smtp.gmail.com';
     config.port = 587;
-    config.secure = true; // true for 465, false for other ports
+    config.secure = false; // true for 465, false for other ports
   }
+
+  // Final config verification log
+  const debugConfig = { ...config, auth: { ...config.auth, pass: '*****' } };
+  console.log('👷 Final Nodemailer Config:', JSON.stringify(debugConfig, null, 2));
 
   return nodemailer.createTransport(config);
 };
