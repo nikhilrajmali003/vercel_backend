@@ -13,25 +13,24 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  process.env.FRONTEND_URL?.replace(/^https?:\/\//, ''),
-  'http://localhost:3000',
-  'https://swipcard.netlify.app'
+  'https://swipcard.netlify.app',
+  'http://localhost:3000'
 ].filter(Boolean);
 
-// Handle preflight requests for all routes
-app.options('*', cors());
-
+// CORS configuration - single middleware to handle everything
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.some(allowed =>
+    // Precise matching or suffix matching for subdomains/platforms
+    const isAllowed = allowedOrigins.some(allowed =>
       origin === allowed ||
-      origin === `https://${allowed}` ||
-      origin === `http://${allowed}` ||
-      origin.endsWith(allowed) // Allow subdomains if needed
-    )) {
+      origin === allowed.replace(/^https?:\/\//, '') ||
+      origin.replace(/^https?:\/\//, '') === allowed.replace(/^https?:\/\//, '')
+    );
+
+    if (isAllowed) {
       callback(null, true);
     } else {
       console.warn(`Blocked by CORS: ${origin}`);
@@ -42,7 +41,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -110,7 +109,7 @@ mongoose.connect(MONGODB_URI)
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`📡 API Base URL: ${process.env.FRONTEND_URL}/api`);
+      console.log(`📡 API Base URL: http://localhost:${PORT}/api`);
     });
 
     // Handle server errors
