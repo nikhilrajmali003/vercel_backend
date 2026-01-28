@@ -22,10 +22,7 @@ const createTransporter = () => {
     greetingTimeout: 60000,
     socketTimeout: 60000,
     // Force IPv4 to avoid IPv6 issues in some container environments
-    // This is a common fix for 'ETIMEDOUT' on Render/Docker
-    tls: {
-      ciphers: 'SSLv3'
-    },
+    family: 4,
     logger: true,
     debug: true
   };

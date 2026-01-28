@@ -14,7 +14,8 @@ const app = express();
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   process.env.FRONTEND_URL?.replace(/^https?:\/\//, ''), // Allow domain without protocol if needed (though browser sends protocol)
-  'http://localhost:3000' // Local development
+  'http://localhost:3000', // Local development
+  'https://swipcard.netlify.app' // Explicitly allow deployed frontend
 ].filter(Boolean);
 
 app.use(cors({
