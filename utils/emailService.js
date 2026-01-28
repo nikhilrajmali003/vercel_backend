@@ -18,9 +18,14 @@ const createTransporter = () => {
       pass: process.env.SMTP_PASS
     },
     // Add timeouts
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
+    connectionTimeout: 60000, // Increased to 60s
+    greetingTimeout: 60000,
+    socketTimeout: 60000,
+    // Force IPv4 to avoid IPv6 issues in some container environments
+    // This is a common fix for 'ETIMEDOUT' on Render/Docker
+    tls: {
+      ciphers: 'SSLv3'
+    },
     logger: true,
     debug: true
   };
