@@ -31,7 +31,11 @@ const createTransporter = () => {
     config.port = parseInt(process.env.SMTP_PORT || '587');
     config.secure = config.port === 465; // true for 465, false for other ports
   } else {
-    config.service = 'gmail';
+    // Default to Port 587 (STARTTLS) for better reliability on cloud hosting (Render, AWS, etc.)
+    // 'service: gmail' defaults to 465 (SSL) which often times out
+    config.host = 'smtp.gmail.com';
+    config.port = 587;
+    config.secure = true; // true for 465, false for other ports
   }
 
   return nodemailer.createTransport(config);
