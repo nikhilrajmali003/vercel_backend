@@ -10,31 +10,34 @@ dotenv.config();
 const app = express();
 
 // Middleware
-// Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'https://swipcard.netlify.app',
   'http://localhost:3000'
-].filter(Boolean);
+].filter(Boolean).map(o => o.toLowerCase().replace(/\/$/, ''));
 
-// CORS configuration - single middleware to handle everything
-app.use(cors({
+// Robust CORS configuration
+const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
     if (!origin) return callback(null, true);
 
-    // Precise matching or suffix matching for subdomains/platforms
+    const normalizedOrigin = origin.toLowerCase().replace(/\/$/, '');
+
+    // Check if the origin matches any allowed origins OR is a netlify/localhost origin
     const isAllowed = allowedOrigins.some(allowed =>
-      origin === allowed ||
-      origin === allowed.replace(/^https?:\/\//, '') ||
-      origin.replace(/^https?:\/\//, '') === allowed.replace(/^https?:\/\//, '')
+      normalizedOrigin === allowed ||
+      normalizedOrigin.endsWith('netlify.app') ||
+      normalizedOrigin.includes('localhost')
     );
 
     if (isAllowed) {
       callback(null, true);
     } else {
-      console.warn(`Blocked by CORS: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`Blocked by CORS: "${origin}" (Normalized: "${normalizedOrigin}")`);
+      // For debugging: list allowed origins if blocked
+      console.log('Allowed Origins:', allowedOrigins);
+      callback(null, false);
     }
   },
   credentials: true,
@@ -42,7 +45,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
   optionsSuccessStatus: 200
-}));
+};
+
+// Apply CORS middleware before any routes
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
